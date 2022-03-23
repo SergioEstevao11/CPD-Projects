@@ -1,0 +1,4 @@
+# Assign1
+assign1/src/matrixproduct/target/*
+assign1/src/matrixproduct/debug/*
+assign1/src/matrixproduct/Cargo.lock
