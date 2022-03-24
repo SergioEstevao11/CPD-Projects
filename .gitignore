@@ -1,4 +1,4 @@
 # Assign1
-assign1/src/matrixproduct/target/*
-assign1/src/matrixproduct/debug/*
-assign1/src/matrixproduct/Cargo.lock
+assign1/src/Rustmatrixproduct/target/*
+assign1/src/Rustmatrixproduct/debug/*
+assign1/src/Rustmatrixproduct/Cargo.lock
