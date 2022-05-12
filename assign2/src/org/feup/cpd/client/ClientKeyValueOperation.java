@@ -11,10 +11,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ClientKeyValueOperation implements KeyValue {
+    private final String nodeAccessPoint;
 
-    public ClientKeyValueOperation() {}
+    public ClientKeyValueOperation(String nodeAccessPoint) {
+        this.nodeAccessPoint = nodeAccessPoint;
+    }
 
-    public String putClientSetup(String nodeAccessPoint, String fileName) {
+    public String putClientSetup(String fileName) {
         StringBuilder keyToBigEndian = new StringBuilder(64);
         String value = "";
 

@@ -53,11 +53,11 @@ public class TestClient {
     }
 
     private static void handleKeyValueOperation(String nodeAccessPoint, String operation, String argument) throws IllegalArgumentException {
-        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation();
+        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint);
 
         switch (operation) {
             case "put" -> {
-                String key = keyValueOperation.putClientSetup(nodeAccessPoint, argument);
+                String key = keyValueOperation.putClientSetup(argument);
                 System.out.println("File saved with the following key: " + key);
             }
             case "get" -> {
