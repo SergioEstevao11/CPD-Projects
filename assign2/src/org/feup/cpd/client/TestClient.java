@@ -1,6 +1,7 @@
 package org.feup.cpd.client;
 
 import org.feup.cpd.interfaces.Membership;
+import org.feup.cpd.store.NodeAccessPoint;
 
 import java.io.File;
 import java.rmi.NotBoundException;
@@ -16,7 +17,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        String nodeAccessPoint = args[0];
+        NodeAccessPoint nodeAccessPoint = parseNodeAccessPoint(args[0]);
         String operation = args[1];
 
         switch (operation) {
@@ -29,31 +30,25 @@ public class TestClient {
         }
     }
 
-    // FIXME: I don't have any idea about what should this method return - Mike
-    private static void handleMembershipOperation(String nodeAccessPoint, String operation) {
-        String remoteCallReturn = "";
-
+    private static void handleMembershipOperation(NodeAccessPoint nodeAccessPoint, String operation) {
         try {
-            Registry registry = LocateRegistry.getRegistry(nodeAccessPoint);
+            Registry registry = LocateRegistry.getRegistry(nodeAccessPoint.port());
             Membership remoteCall = (Membership) registry.lookup("Membership");
 
             if (operation.equals("join"))
-                remoteCallReturn = remoteCall.join();
+                remoteCall.join();
             else if (operation.equals("leave"))
-                remoteCallReturn = remoteCall.leave();
-
+                remoteCall.leave();
         } catch (RemoteException | NotBoundException e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
-
-        // FIXME: printing for now, this should (must) be changed later, idk for what - Mike
-        System.out.println(remoteCallReturn);
     }
 
-    private static void handleKeyValueOperation(String nodeAccessPoint, String operation, String argument) throws IllegalArgumentException {
-        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint);
+    private static void handleKeyValueOperation(NodeAccessPoint nodeAccessPoint,
+                                                String operation, String argument) throws IllegalArgumentException {
+        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint.toString());
 
         switch (operation) {
             case "put" -> {
@@ -70,5 +65,12 @@ public class TestClient {
             }
             default -> throw new IllegalArgumentException("Unexpected argument: " + argument);
         }
+    }
+
+    private static NodeAccessPoint parseNodeAccessPoint(String nodeAccessPoint) {
+        String host = nodeAccessPoint.substring(0, nodeAccessPoint.indexOf(':'));
+        String port = nodeAccessPoint.substring(nodeAccessPoint.indexOf(':') + 1);
+
+        return NodeAccessPoint.buildStoreAddress(host, port);
     }
 }

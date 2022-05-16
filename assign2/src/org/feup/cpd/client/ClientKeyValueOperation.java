@@ -32,7 +32,6 @@ public class ClientKeyValueOperation implements KeyValue {
                 keyToBigEndian.append(String.format("%02x", b));
 
         } catch (NoSuchAlgorithmException | IOException e) {
-            System.err.println(e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
