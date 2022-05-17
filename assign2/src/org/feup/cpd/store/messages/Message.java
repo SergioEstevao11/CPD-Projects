@@ -9,25 +9,36 @@ public abstract class Message {
 
     private final StringBuilder header;
     private final StringBuilder body;
+    private boolean headerClosed = false;
 
     protected Message() {
         header = new StringBuilder();
         body = new StringBuilder();
     }
 
-    protected void addHeaderLine(String line) {
-        header.append(line).append(CRLF);
+    protected void closeHeader() {
+        header.append(CRLF);
+        headerClosed = true;
     }
 
-    protected int getHeaderNumberOfLines() {
+    private int getNumberOfLines(String text) {
         Pattern pattern = Pattern.compile(CRLF);
-        Matcher matcher = pattern.matcher(header.toString());
+        Matcher matcher = pattern.matcher(text);
 
         int lines = 0;
         while (matcher.find())
             lines++;
 
         return lines;
+    }
+
+    protected void addHeaderLine(String line) {
+        if (!headerClosed)
+            header.append(line).append(CRLF);
+    }
+
+    protected int getHeaderNumberOfLines() {
+        return getNumberOfLines(header.toString());
     }
 
     protected void addBodyLine(String line) {
@@ -35,14 +46,7 @@ public abstract class Message {
     }
 
     protected int getBodyNumberOfLines() {
-        Pattern pattern = Pattern.compile(CRLF);
-        Matcher matcher = pattern.matcher(body.toString());
-
-        int lines = 0;
-        while (matcher.find())
-            lines++;
-
-        return lines;
+        return getNumberOfLines(body.toString());
     }
 
     protected String assemble() {
@@ -50,10 +54,5 @@ public abstract class Message {
         String bodyContent = body.toString();
 
         return headerContent + bodyContent;
-    }
-
-    protected void clean() {
-        header.delete(0, header.length());
-        body.delete(0, body.length());
     }
 }

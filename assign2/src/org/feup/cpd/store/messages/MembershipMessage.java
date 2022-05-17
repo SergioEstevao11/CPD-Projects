@@ -16,8 +16,7 @@ public class MembershipMessage extends Message {
         if (counter % 2 != 0)
             throw new IllegalArgumentException("Counter out of sync while joining cluster");
 
-        clean();
-        addHeaderLine(counter + ':' + nodeId.address().toString());
+        addHeaderLine(counter + " " + nodeId.address().getHostAddress());
         return assemble();
     }
 
@@ -25,8 +24,7 @@ public class MembershipMessage extends Message {
         if (counter % 2 == 0)
             throw new IllegalArgumentException("Counter out of sync while leaving cluster");
 
-        clean();
-        addHeaderLine(counter + ':' + nodeId.address().toString());
+        addHeaderLine(counter + " " + nodeId.address().getHostAddress());
         return assemble();
     }
 

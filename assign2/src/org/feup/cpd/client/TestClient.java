@@ -30,15 +30,17 @@ public class TestClient {
         }
     }
 
-    private static void handleMembershipOperation(NodeAccessPoint nodeAccessPoint, String operation) {
+    private static void handleMembershipOperation(NodeAccessPoint nodeAccessPoint,
+                                                  String operation) throws IllegalArgumentException {
         try {
             Registry registry = LocateRegistry.getRegistry(nodeAccessPoint.port());
-            Membership remoteCall = (Membership) registry.lookup("Membership");
+            Membership membership = (Membership) registry.lookup("Membership");
 
-            if (operation.equals("join"))
-                remoteCall.join();
-            else if (operation.equals("leave"))
-                remoteCall.leave();
+            switch (operation) {
+                case "join" -> membership.join();
+                case "leave" -> membership.leave();
+                default -> throw new IllegalArgumentException("Unexpected operation: " + operation);
+            }
         } catch (RemoteException | NotBoundException e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
