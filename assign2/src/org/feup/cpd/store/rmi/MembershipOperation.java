@@ -1,80 +1,115 @@
-package org.feup.cpd.store;
+package org.feup.cpd.store.rmi;
 
 import org.feup.cpd.interfaces.Membership;
-import org.feup.cpd.store.messages.MembershipMessage;
+import org.feup.cpd.store.NodeAccessPoint;
+import org.feup.cpd.store.messages.membership.JoinMessage;
+import org.feup.cpd.store.messages.membership.LeaveMessage;
+import org.feup.cpd.store.network.TPCMembershipListener;
+import org.feup.cpd.store.network.UDPMembershipListener;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.io.IOException;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
-public class StoreMembershipOperation implements Membership {
+public class MembershipOperation implements Membership {
 
-    private int membershipCounter = 0;
-    private final NodeAccessPoint nodeId;
-    private final Path log;
+    private final NodeAccessPoint cluster;
+    private final NodeAccessPoint node;
+    private List<NodeAccessPoint> membershipView;
+    private long membershipCounter;
 
-    public StoreMembershipOperation(NodeAccessPoint multicast, NodeAccessPoint nodeId) {
-        this.nodeId = nodeId;
-        log = Path.of(multicast.toString() + '-' + nodeId.toString() + ".log");
+    private final TPCMembershipListener membershipInitializer;
+    private final UDPMembershipListener membershipListener;
 
-        if (Files.exists(log))
-            restoreMembershipCounter();
+    public MembershipOperation(ExecutorService pool, NodeAccessPoint cluster, NodeAccessPoint node) {
+        this.cluster = cluster;
+        this.node = node;
+
+        this.membershipCounter = -1;
+        this.membershipView = new ArrayList<>();
+
+        this.membershipInitializer = new TPCMembershipListener(pool, node);
+        this.membershipListener = new UDPMembershipListener(pool, cluster);
+    }
+
+    public void setMembershipView(List<NodeAccessPoint> membershipView) {
+        this.membershipView = membershipView;
     }
 
     @Override
     public void join() throws RemoteException {
+        if (membershipCounter % 2 == 0)
+            throw new RemoteException("Unable to call join() on a cluster already joined");
+
+        // 1. Increase the membership counter
+        membershipCounter++;
+
+        // FIXME: Need to sync - membership channel must be ready before sending JOIN
+        // 2. Prepare the TCP listener for the incoming MEMBERSHIP messages
+        membershipInitializer.start();
+
+        // 3. Send the JOIN message
         try {
-            BufferedWriter logWriter = Files.newBufferedWriter(log, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            MembershipMessage message = new MembershipMessage(nodeId);
+            DatagramSocket socket = new DatagramSocket();
+            SocketAddress address = new InetSocketAddress(cluster.address(), cluster.port());
 
-            logWriter.write(message.join(membershipCounter));
-            logWriter.close();
-            membershipCounter++;
+            JoinMessage message = new JoinMessage(node, membershipCounter);
+            byte[] messageBytes = message.serialize().getBytes(StandardCharsets.UTF_8);
 
-        } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
+            DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, address);
+
+            socket.send(packet);
+            socket.close();
         } catch (IOException e) {
+            e.printStackTrace();
+            membershipInitializer.interrupt();
+        }
+
+        // 4. Wait for the decoding of the MEMBERSHIP messages
+        try {
+            membershipInitializer.join();
+        } catch (InterruptedException e) {
             e.printStackTrace();
             System.exit(1);
         }
+
+        // 5. Prepare the UDP listener
+        membershipListener.start();
+
+        // 6. Election
     }
 
     @Override
     public void leave() throws RemoteException {
+        if (membershipCounter % 2 != 0)
+            throw new RemoteException("Unable to call leave() on a cluster already left");
+
+        // 1. Increment the membership counter
+        membershipCounter++;
+
+        // 2. Send the LEAVE message
         try {
-            if (!Files.exists(log))
-                throw new FileNotFoundException("File not found: " + log);
+            DatagramSocket socket = new DatagramSocket();
+            SocketAddress address = new InetSocketAddress(cluster.address(), cluster.port());
 
-            BufferedWriter logWriter = Files.newBufferedWriter(log, StandardOpenOption.APPEND);
-            MembershipMessage message = new MembershipMessage(nodeId);
+            LeaveMessage message = new LeaveMessage(node, membershipCounter);
+            byte[] messageBytes = message.serialize().getBytes(StandardCharsets.UTF_8);
 
-            logWriter.write(message.leave(membershipCounter));
-            logWriter.close();
-            membershipCounter++;
+            DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, address);
 
-        } catch (IllegalArgumentException | FileNotFoundException e) {
-            System.err.println(e.getMessage());
+            socket.send(packet);
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
         }
-    }
 
-    private void restoreMembershipCounter() {
-        try {
-            List<String> lines = Files.readAllLines(log);
-            String lastLine = lines.get(lines.size() - 1);
-            String[] tokens = lastLine.split("\s+");
+        // 3. Interrupt the membership listener
+        membershipListener.interrupt();
 
-            // The read membership counter is from the previous state
-            membershipCounter = Integer.parseInt(tokens[0]) + 1;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        // 4. ?? To be discovered
     }
 }
