@@ -5,22 +5,22 @@ import java.net.UnknownHostException;
 
 public record NodeAccessPoint(InetAddress address, int port) {
 
-    @Override
-    public String toString() {
-        return address().getHostAddress() + ':' + port;
-    }
-
-    public static NodeAccessPoint buildStoreAddress(String host, String port) {
+    public static NodeAccessPoint getInstance(String host, String port) {
         try {
-            InetAddress inetAddress = InetAddress.getByName(host);
-            int inetAddressPort = Integer.parseInt(port);
+            InetAddress address = InetAddress.getByName(host);
+            int parsedPort = Integer.parseUnsignedInt(port);
 
-            return new NodeAccessPoint(inetAddress, inetAddressPort);
-        } catch (UnknownHostException e) {
+            return new NodeAccessPoint(address, parsedPort);
+        } catch (UnknownHostException | NumberFormatException e) {
             e.printStackTrace();
             System.exit(1);
         }
 
-        throw new IllegalArgumentException("Cannot build object of type StoreAddress");
+        throw new IllegalArgumentException("Unable to build instance for object of type NodeAccessPoint");
+    }
+
+    @Override
+    public String toString() {
+        return address.getHostAddress() + ':' + port;
     }
 }
