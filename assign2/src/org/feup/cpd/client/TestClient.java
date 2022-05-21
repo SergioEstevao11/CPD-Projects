@@ -73,6 +73,6 @@ public class TestClient {
         String host = nodeAccessPoint.substring(0, nodeAccessPoint.indexOf(':'));
         String port = nodeAccessPoint.substring(nodeAccessPoint.indexOf(':') + 1);
 
-        return NodeAccessPoint.buildStoreAddress(host, port);
+        return NodeAccessPoint.getInstance(host, port);
     }
 }
