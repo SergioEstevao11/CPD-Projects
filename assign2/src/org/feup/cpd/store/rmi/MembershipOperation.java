@@ -2,6 +2,8 @@ package org.feup.cpd.store.rmi;
 
 import org.feup.cpd.interfaces.Membership;
 import org.feup.cpd.store.NodeAccessPoint;
+import org.feup.cpd.store.messages.Message;
+import org.feup.cpd.store.messages.NetworkMessage;
 import org.feup.cpd.store.messages.membership.JoinMessage;
 import org.feup.cpd.store.messages.membership.LeaveMessage;
 import org.feup.cpd.store.network.TPCMembershipListener;
@@ -36,30 +38,12 @@ public class MembershipOperation implements Membership {
         this.membershipListener = new UDPMembershipListener(pool, cluster);
     }
 
-    public void setMembershipView(List<NodeAccessPoint> membershipView) {
-        this.membershipView = membershipView;
-    }
-
-    @Override
-    public void join() throws RemoteException {
-        if (membershipCounter % 2 == 0)
-            throw new RemoteException("Unable to call join() on a cluster already joined");
-
-        // 1. Increase the membership counter
-        membershipCounter++;
-
-        // FIXME: Need to sync - membership channel must be ready before sending JOIN
-        // 2. Prepare the TCP listener for the incoming MEMBERSHIP messages
-        membershipInitializer.start();
-
-        // 3. Send the JOIN message
+    private void sendMulticastMessage(NetworkMessage<? extends Message> message) {
         try {
-            DatagramSocket socket = new DatagramSocket();
             SocketAddress address = new InetSocketAddress(cluster.address(), cluster.port());
-
-            JoinMessage message = new JoinMessage(node, membershipCounter);
             byte[] messageBytes = message.serialize().getBytes(StandardCharsets.UTF_8);
 
+            DatagramSocket socket = new DatagramSocket();
             DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, address);
 
             socket.send(packet);
@@ -68,13 +52,28 @@ public class MembershipOperation implements Membership {
             e.printStackTrace();
             membershipInitializer.interrupt();
         }
+    }
 
+    @Override
+    public void join() throws RemoteException {
+        if (membershipCounter % 2 == 0)
+            throw new RemoteException("Unable to call join() on a cluster already joined");
+
+        // 1. Increase the membership counter
+        // FIXME: Need to sync - membership channel must be ready before sending JOIN
+        // 2. Prepare the TCP listener for the incoming MEMBERSHIP messages
+        // 3. Send the JOIN message
         // 4. Wait for the decoding of the MEMBERSHIP messages
+
+        membershipCounter++;
+        membershipInitializer.start();
+        sendMulticastMessage(new JoinMessage(node, membershipCounter));
+
         try {
             membershipInitializer.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            System.exit(1);
+            throw new RemoteException("Unable to fulfill the membership initialization");
         }
 
         // 5. Prepare the UDP listener
@@ -89,25 +88,11 @@ public class MembershipOperation implements Membership {
             throw new RemoteException("Unable to call leave() on a cluster already left");
 
         // 1. Increment the membership counter
-        membershipCounter++;
-
         // 2. Send the LEAVE message
-        try {
-            DatagramSocket socket = new DatagramSocket();
-            SocketAddress address = new InetSocketAddress(cluster.address(), cluster.port());
-
-            LeaveMessage message = new LeaveMessage(node, membershipCounter);
-            byte[] messageBytes = message.serialize().getBytes(StandardCharsets.UTF_8);
-
-            DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, address);
-
-            socket.send(packet);
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         // 3. Interrupt the membership listener
+
+        membershipCounter++;
+        sendMulticastMessage(new LeaveMessage(node, membershipCounter));
         membershipListener.interrupt();
 
         // 4. ?? To be discovered
