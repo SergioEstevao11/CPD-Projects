@@ -44,7 +44,7 @@ public class ClientKeyValueOperation implements KeyValue {
 
     @Override
     public void put(String key, String value) {
-        // TODO: make the communication with Node
+
     }
 
     @Override
