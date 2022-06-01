@@ -1,9 +1,10 @@
 package org.feup.cpd.client;
 
 import org.feup.cpd.interfaces.Membership;
-import org.feup.cpd.store.NodeAccessPoint;
+import org.feup.cpd.store.AccessPoint;
 
 import java.io.File;
+import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -11,13 +12,13 @@ import java.rmi.registry.Registry;
 
 public class TestClient {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
         if (args.length < 2) {
             System.err.println("Usage: java TestClient <node_ap> <operation> [<opnd>]");
             System.exit(1);
         }
 
-        NodeAccessPoint nodeAccessPoint = parseNodeAccessPoint(args[0]);
+        AccessPoint nodeAccessPoint = parseNodeAccessPoint(args[0]);
         String operation = args[1];
 
         switch (operation) {
@@ -30,10 +31,10 @@ public class TestClient {
         }
     }
 
-    private static void handleMembershipOperation(NodeAccessPoint nodeAccessPoint,
+    private static void handleMembershipOperation(AccessPoint nodeAccessPoint,
                                                   String operation) throws IllegalArgumentException {
         try {
-            Registry registry = LocateRegistry.getRegistry(nodeAccessPoint.port());
+            Registry registry = LocateRegistry.getRegistry(nodeAccessPoint.getPort());
             Membership membership = (Membership) registry.lookup("Membership");
 
             switch (operation) {
@@ -48,7 +49,7 @@ public class TestClient {
         }
     }
 
-    private static void handleKeyValueOperation(NodeAccessPoint nodeAccessPoint,
+    private static void handleKeyValueOperation(AccessPoint nodeAccessPoint,
                                                 String operation, String argument) throws IllegalArgumentException {
         ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint.toString());
 
@@ -69,10 +70,10 @@ public class TestClient {
         }
     }
 
-    private static NodeAccessPoint parseNodeAccessPoint(String nodeAccessPoint) {
+    private static AccessPoint parseNodeAccessPoint(String nodeAccessPoint) throws UnknownHostException {
         String host = nodeAccessPoint.substring(0, nodeAccessPoint.indexOf(':'));
         String port = nodeAccessPoint.substring(nodeAccessPoint.indexOf(':') + 1);
 
-        return NodeAccessPoint.getInstance(host, port);
+        return new AccessPoint(host, port);
     }
 }
