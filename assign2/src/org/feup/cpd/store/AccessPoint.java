@@ -2,6 +2,7 @@ package org.feup.cpd.store;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 public final class AccessPoint {
 
@@ -24,5 +25,18 @@ public final class AccessPoint {
     @Override
     public String toString() {
         return address.getHostAddress() + ':' + port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AccessPoint that = (AccessPoint) o;
+        return port == that.port && Objects.equals(address, that.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address, port);
     }
 }
