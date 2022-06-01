@@ -12,8 +12,6 @@ public abstract class Message {
         this.body = new StringBuilder();
     }
 
-    public String getContent() {
-        return body.toString();
-    }
+    public abstract String getContent();
 }
 

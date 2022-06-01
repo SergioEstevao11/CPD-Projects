@@ -5,18 +5,23 @@ import org.feup.cpd.store.AccessPoint;
 public final class LeaveMessage extends Message {
 
     private final AccessPoint accessPoint;
-    private final long count;
+    private final long counter;
 
-    public LeaveMessage(AccessPoint accessPoint, long count) {
+    public LeaveMessage(AccessPoint accessPoint, long counter) {
         super("LEAVE");
         this.accessPoint = accessPoint;
-        this.count = count;
+        this.counter = counter;
 
-        body.append(accessPoint).append(' ').append(count);
+        body.append(accessPoint).append(' ').append(counter);
     }
 
     @Override
     public String toString() {
         return type + CRLF + body;
+    }
+
+    @Override
+    public String getContent() {
+        return accessPoint + " " + counter;
     }
 }

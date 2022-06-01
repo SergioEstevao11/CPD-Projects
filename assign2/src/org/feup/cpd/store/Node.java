@@ -58,6 +58,10 @@ public class Node {
         counter++;
     }
 
+    public void decrementCounter() {
+        counter--;
+    }
+
     public void addMembershipEvent(String event) {
         if (events.isEmpty()) {
             events.add(event);
