@@ -14,6 +14,7 @@ public class Node {
     private long counter;
     private final AccessPoint ap;
     private final Set<String> view;
+    private final Map<String, String> viewSHA;
     private Queue<String> events;
     private Map<String, String> bucket;
     private final File logger;
@@ -21,6 +22,7 @@ public class Node {
     public Node(AccessPoint ap) {
         this.ap = ap;
         this.view = new HashSet<>();
+        this.viewSHA = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
         this.logger = new File("log/" + ap.toString() + ".log");
