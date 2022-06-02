@@ -41,7 +41,7 @@ public class MembershipOperation implements Membership {
 
             node.addMembershipEvent(initializer.getJoin().getContent());
             if (node.getView().isEmpty())
-                node.updateMembershipView(node.getAccessPoint().toString());
+                node.addNodeToView(node.getAccessPoint().toString());
 
         } catch (InterruptedException | IOException e) {
             node.decrementCounter();

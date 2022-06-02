@@ -118,8 +118,12 @@ public class Node {
         view.clear();
     }
 
-    public void updateMembershipView(String element) {
+    public void addNodeToView(String element) {
         view.add(element);
+    }
+
+    public void removeNodeFromView(String element) {
+        view.remove(element);
     }
 
     public Set<String> getView() {
