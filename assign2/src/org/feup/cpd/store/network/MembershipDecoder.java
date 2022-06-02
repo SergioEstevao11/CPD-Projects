@@ -62,10 +62,17 @@ public class MembershipDecoder implements Runnable {
     @Override
     public void run() {
         switch (content.get(0)) {
-            case "MEMBERSHIP" -> decodeMembership();
-            case "JOIN" -> decodeJoin();
-            case "LEAVE" -> decodeLeave();
-            default -> System.err.println("Error while decoding message of type: " + content.get(0));
+            case "MEMBERSHIP":
+                decodeMembership();
+                break;
+            case "JOIN":
+                decodeJoin();
+                break;
+            case "LEAVE":
+                decodeLeave();
+                break;
+            default:
+                System.err.println("Error while decoding message of type: " + content.get(0));
         }
     }
 }

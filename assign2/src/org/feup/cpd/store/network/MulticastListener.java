@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 public class MulticastListener extends Thread {
 
@@ -50,7 +51,7 @@ public class MulticastListener extends Thread {
         while (running) {
             try {
                 socket.receive(packet);
-                List<String> content = new String(packet.getData()).lines().toList();
+                List<String> content = new String(packet.getData()).lines().collect(Collectors.toList());
                 pool.submit(new MembershipDecoder(node, content));
                 packet.setLength(buffer.length);
 

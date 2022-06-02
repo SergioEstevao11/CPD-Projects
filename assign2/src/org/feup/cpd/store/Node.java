@@ -2,6 +2,7 @@ package org.feup.cpd.store;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Node {
 
@@ -30,7 +31,7 @@ public class Node {
 
     private long recoverCounter() throws FileNotFoundException {
         BufferedReader reader = new BufferedReader(new FileReader(logger));
-        List<String> lines = reader.lines().toList();
+        List<String> lines = reader.lines().collect(Collectors.toList());
 
         long cnt = -1;
 

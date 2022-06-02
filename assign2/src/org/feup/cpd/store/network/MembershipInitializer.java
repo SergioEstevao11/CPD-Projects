@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 public class MembershipInitializer extends Thread {
 
@@ -49,7 +50,7 @@ public class MembershipInitializer extends Thread {
                 do {
                     Socket socket = server.accept();
                     List<String> content = new String(socket.getInputStream().readAllBytes())
-                            .lines().toList();
+                            .lines().collect(Collectors.toList());
 
                     pool.submit(new MembershipDecoder(node, content));
                     received++;
