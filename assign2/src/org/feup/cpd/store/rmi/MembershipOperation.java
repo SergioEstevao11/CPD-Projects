@@ -3,7 +3,6 @@ package org.feup.cpd.store.rmi;
 import org.feup.cpd.interfaces.Membership;
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
-import org.feup.cpd.store.message.JoinMessage;
 import org.feup.cpd.store.message.LeaveMessage;
 import org.feup.cpd.store.network.MembershipInitializer;
 import org.feup.cpd.store.network.MulticastSender;
@@ -41,6 +40,9 @@ public class MembershipOperation implements Membership {
             initializer.join();
 
             node.addMembershipEvent(initializer.getJoin().getContent());
+            if (node.getView().isEmpty())
+                node.updateMembershipView(node.getAccessPoint().toString());
+
         } catch (InterruptedException | IOException e) {
             node.decrementCounter();
             e.printStackTrace();
@@ -48,6 +50,7 @@ public class MembershipOperation implements Membership {
         }
 
         System.out.println(node.getAccessPoint() + " is now a part of " + cluster);
+        System.out.println("node view = " + node.getView());
     }
 
     @Override
@@ -67,5 +70,8 @@ public class MembershipOperation implements Membership {
             e.printStackTrace();
             throw new RemoteException("Unable to send LEAVE via multicast to " + cluster.getAddress());
         }
+
+        node.clearMembershipView();
+        System.out.println(node.getAccessPoint() + " is no longer a part of " + cluster);
     }
 }

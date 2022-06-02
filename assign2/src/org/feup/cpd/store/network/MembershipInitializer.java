@@ -3,8 +3,7 @@ package org.feup.cpd.store.network;
 import org.feup.cpd.store.Node;
 import org.feup.cpd.store.message.JoinMessage;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -14,6 +13,7 @@ public class MembershipInitializer extends Thread {
 
     private final ExecutorService pool;
     private final MulticastSender sender;
+    private final Node node;
 
     private int retries, received;
 
@@ -23,6 +23,7 @@ public class MembershipInitializer extends Thread {
     public MembershipInitializer(ExecutorService pool, Node node, MulticastSender sender) throws IOException {
         this.pool = pool;
         this.sender = sender;
+        this.node = node;
         this.retries = this.received = 0;
 
         this.server = new ServerSocket(0, 3, node.getAccessPoint().getAddress());
@@ -37,7 +38,6 @@ public class MembershipInitializer extends Thread {
     @Override
     public void run() {
         while (retries < 3) {
-            System.out.println("retries = " + retries);
 
             try {
                 sender.send(join);
@@ -47,15 +47,16 @@ public class MembershipInitializer extends Thread {
             }
 
             try {
+                received = 0;
                 do {
                     Socket socket = server.accept();
-                    InputStream in = socket.getInputStream();
-
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    pool.submit(new MembershipDecoder(node, in.lines().toList()));
                     received++;
-                    System.out.println("Data received: " + new String(in.readAllBytes()));
-                    // pool.submit();
+
                     socket.close();
                 } while (received < 3);
+
             } catch (SocketTimeoutException e) {
                 retries++;
                 continue;
