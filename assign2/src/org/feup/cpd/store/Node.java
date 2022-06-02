@@ -1,40 +1,38 @@
 package org.feup.cpd.store;
 
 import java.io.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public class Node {
 
     private long counter;
     private final AccessPoint ap;
-
+    private final Set<String> view;
     private Queue<String> events;
-    private File logger;
+    private final File logger;
 
     public Node(AccessPoint ap) {
         this.ap = ap;
+        this.view = new HashSet<>();
         this.events = new LinkedList<>();
 
         this.logger = new File("log/" + ap.toString() + ".log");
-        File logDir = this.logger.getParentFile();
-        if (!logDir.exists()) {
-            boolean ignored = logDir.mkdirs();
+        if (!this.logger.getParentFile().exists()) {
+            boolean ignored = this.logger.getParentFile().mkdirs();
         }
 
         try {
-            recoverCounter();
+            this.counter = recoverCounter();
         } catch (FileNotFoundException e) {
             this.counter = -1;
         }
     }
 
-    private void recoverCounter() throws FileNotFoundException {
+    private long recoverCounter() throws FileNotFoundException {
         BufferedReader reader = new BufferedReader(new FileReader(logger));
         List<String> lines = reader.lines().toList();
 
-        counter = -1;
+        long cnt = -1;
 
         for (String event : lines) {
             String[] fields = event.split("\\s+");
@@ -42,13 +40,17 @@ public class Node {
             long eventCounter = Long.parseLong(fields[1]);
 
             if (id.equals(ap.toString()))
-                counter = Math.max(counter, eventCounter);
+                cnt = Math.max(cnt, eventCounter);
         }
+
+        return cnt;
     }
+
 
     public AccessPoint getAccessPoint() {
         return ap;
     }
+
 
     public long getCounter() {
         return counter;
@@ -61,6 +63,7 @@ public class Node {
     public void decrementCounter() {
         counter--;
     }
+
 
     public void addMembershipEvent(String event) {
         if (events.isEmpty()) {
@@ -108,5 +111,18 @@ public class Node {
             e.printStackTrace();
             System.err.println("Exception while dumping " + membershipEvent + " to " + logger.getAbsolutePath());
         }
+    }
+
+
+    public void clearMembershipView() {
+        view.clear();
+    }
+
+    public void updateMembershipView(String element) {
+        view.add(element);
+    }
+
+    public Set<String> getView() {
+        return view;
     }
 }
