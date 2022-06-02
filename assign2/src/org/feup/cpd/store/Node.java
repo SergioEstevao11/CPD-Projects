@@ -1,6 +1,12 @@
 package org.feup.cpd.store;
 
 import java.io.*;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class Node {
@@ -129,6 +135,24 @@ public class Node {
 
 
     //key-value operations
+
+    public String getSHA(String key){
+        StringBuilder keyToBigEndian = new StringBuilder(64);
+
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = messageDigest.digest(key.getBytes(StandardCharsets.UTF_8));
+
+            for (byte b : hash)
+                keyToBigEndian.append(String.format("%02x", b));
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            System.exit(1);
+
+        }
+
+        return keyToBigEndian.toString();
+    }
 
     private String locateKeyValue(String key){
         if (bucket.containsKey(key)){
