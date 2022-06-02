@@ -7,6 +7,6 @@ public class GetMessage extends Message{
 
     @Override
     public String getContent() {
-        hh
+        return null;
     }
 }

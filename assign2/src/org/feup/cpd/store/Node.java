@@ -9,13 +9,14 @@ public class Node {
     private final AccessPoint ap;
     private final Set<String> view;
     private Queue<String> events;
+    private Map<String, String> bucket;
     private final File logger;
 
     public Node(AccessPoint ap) {
         this.ap = ap;
         this.view = new HashSet<>();
         this.events = new LinkedList<>();
-
+        this.bucket = new HashMap<>();
         this.logger = new File("log/" + ap.toString() + ".log");
         if (!this.logger.getParentFile().exists()) {
             boolean ignored = this.logger.getParentFile().mkdirs();
@@ -124,5 +125,49 @@ public class Node {
 
     public Set<String> getView() {
         return view;
+    }
+
+
+    //key-value operations
+
+    private String locateKeyValue(String key){
+        if (bucket.containsKey(key)){
+            return ap.toString();
+        }
+        else{
+            //locate node with the "clock structure" and binary search
+            return "";
+        }
+    }
+
+    public String getValue(String key){
+        String key_location = locateKeyValue(key);
+        if (key_location == ap.toString()){
+            return bucket.get(key);
+        }
+        else{
+            //mandar pedido "get" para o node "key_location"
+            return "";
+        }
+    }
+
+    public void putValue(String key, String value){
+        String key_location = locateKeyValue(key);
+        if (key_location == ap.toString()){
+            bucket.put(key, value);
+        }
+        else{
+            //mandar pedido "put" para o node "key_location"
+        }
+    }
+
+    public void deleteValue(String key){
+        String key_location = locateKeyValue(key);
+        if (key_location == ap.toString()){
+            bucket.remove(key);
+        }
+        else{
+            //mandar pedido "remove" para o node "key_location"
+        }
     }
 }
