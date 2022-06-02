@@ -113,6 +113,10 @@ public class Node {
         }
     }
 
+    public Queue<String> getEvents() {
+        return events;
+    }
+
 
     public void clearMembershipView() {
         view.clear();

@@ -7,68 +7,68 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public class MembershipInitializer extends Thread {
 
     private final ExecutorService pool;
-    private final MulticastSender sender;
     private final Node node;
-
-    private int retries, received;
-
-    private final JoinMessage join;
     private final ServerSocket server;
+    private final MulticastSender sender;
+    private int retries, received;
 
     public MembershipInitializer(ExecutorService pool, Node node, MulticastSender sender) throws IOException {
         this.pool = pool;
-        this.sender = sender;
         this.node = node;
-        this.retries = this.received = 0;
+        this.sender = sender;
+
+        this.retries = 0;
+        this.received = 0;
 
         this.server = new ServerSocket(0, 3, node.getAccessPoint().getAddress());
         this.server.setSoTimeout(3 * 1000);
-        this.join = new JoinMessage(node.getAccessPoint(), node.getCounter(), this.server.getLocalPort());
     }
 
-    public JoinMessage getJoin() {
-        return join;
-    }
 
     @Override
     public void run() {
-        while (retries < 3) {
+        JoinMessage join = new JoinMessage(node.getAccessPoint(), node.getCounter(), server.getLocalPort());
+
+        do {
 
             try {
                 sender.send(join);
             } catch (IOException e) {
                 e.printStackTrace();
-                break;
+                return;
             }
 
             try {
                 received = 0;
                 do {
                     Socket socket = server.accept();
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    pool.submit(new MembershipDecoder(node, in.lines().toList()));
+                    List<String> content = new String(socket.getInputStream().readAllBytes())
+                            .lines().toList();
+
+                    pool.submit(new MembershipDecoder(node, content));
                     received++;
+                    System.out.println("content = " + content);
 
                     socket.close();
                 } while (received < 3);
 
+                System.err.println("Initialization complete");
+                break;
+
             } catch (SocketTimeoutException e) {
                 retries++;
-                continue;
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            try {
-                server.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        } while (retries < 3);
+
+        node.addMembershipEvent(join.getContent());
     }
 }

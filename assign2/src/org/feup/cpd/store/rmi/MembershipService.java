@@ -4,6 +4,7 @@ import org.feup.cpd.interfaces.Membership;
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -23,17 +24,15 @@ public class MembershipService {
 
     public void listen() {
         ExecutorService pool = Executors.newFixedThreadPool(6);
-        MembershipOperation operation = new MembershipOperation(pool, cluster, node);
-        int port = node.getAccessPoint().getPort();
 
         try {
-            Membership membership = (Membership) UnicastRemoteObject.exportObject(operation, port);
-            Registry registry = LocateRegistry.createRegistry(port);
+            MembershipOperation operation = new MembershipOperation(pool, cluster, node);
+            Membership membership = (Membership) UnicastRemoteObject.exportObject(operation, node.getAccessPoint().getPort());
+            Registry registry = LocateRegistry.createRegistry(node.getAccessPoint().getPort());
             registry.rebind("Membership", membership);
 
-        } catch (RemoteException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-
         } finally {
             pool.shutdown();
         }

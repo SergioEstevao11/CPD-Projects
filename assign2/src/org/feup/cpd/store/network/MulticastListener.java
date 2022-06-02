@@ -38,6 +38,7 @@ public class MulticastListener extends Thread {
     public void run() {
         try {
             socket.joinGroup(address, netInterface);
+            System.out.println("Joined multicast group " + address);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -53,10 +54,18 @@ public class MulticastListener extends Thread {
                 pool.submit(new MembershipDecoder(node, content));
                 packet.setLength(buffer.length);
 
+                System.out.println("content = " + content.get(0));
+
             } catch (IOException e) {
                 e.printStackTrace();
                 return;
             }
+        }
+
+        try {
+            socket.leaveGroup(address, netInterface);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

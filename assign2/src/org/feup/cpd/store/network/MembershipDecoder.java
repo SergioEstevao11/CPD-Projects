@@ -1,13 +1,12 @@
 package org.feup.cpd.store.network;
 
 import org.feup.cpd.store.Node;
+import org.feup.cpd.store.message.MembershipMessage;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.security.UnrecoverableKeyException;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class MembershipDecoder implements Runnable {
@@ -41,12 +40,16 @@ public class MembershipDecoder implements Runnable {
         String hostname = fields[0].split(":")[0];
         int port = Integer.parseUnsignedInt(fields[2]);
 
-        try  {
+        try {
             Socket socket = new Socket(hostname, port);
-            socket.shutdownOutput();
+            socket.shutdownInput();
 
-        } catch (IOException | UnknownHostException e) {
+            MembershipMessage msg = new MembershipMessage(node.getView(), node.getEvents());
+            OutputStream out = socket.getOutputStream();
+            out.write(msg.toString().getBytes(StandardCharsets.UTF_8));
 
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
