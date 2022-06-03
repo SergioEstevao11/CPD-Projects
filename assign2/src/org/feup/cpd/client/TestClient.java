@@ -26,8 +26,8 @@ public class TestClient {
             case "leave":
                 handleMembershipOperation(nodeAccessPoint, operation);
                 break;
-            case "put":
-            case"get":
+            case "get":
+            case"put":
             case"delete":
                 String operationArgument = args[2];
                 handleKeyValueOperation(nodeAccessPoint, operation, operationArgument);
@@ -62,7 +62,8 @@ public class TestClient {
 
     private static void handleKeyValueOperation(AccessPoint nodeAccessPoint,
                                                 String operation, String argument) throws IllegalArgumentException {
-        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint.toString());
+
+        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint);
 
         switch (operation) {
             case "put":

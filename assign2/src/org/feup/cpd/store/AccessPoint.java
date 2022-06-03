@@ -22,6 +22,8 @@ public final class AccessPoint {
         return port;
     }
 
+    public int getKeyValuePort(){return port-1;}
+
     @Override
     public String toString() {
         return address.getHostAddress() + ':' + port;

@@ -7,10 +7,9 @@ public class PutMessage extends Message{
     private final AccessPoint accessPoint;
     private final String key;
     private final String value;
-    private final int port;
 
 
-    public PutMessage(AccessPoint accessPoint, String key, String value, int port) {
+    public PutMessage(AccessPoint accessPoint, String key, String value) {
         /**
          * accessPoint : origin node ip address
          * key : key
@@ -22,19 +21,20 @@ public class PutMessage extends Message{
         this.accessPoint = accessPoint;
         this.key = key;
         this.value = value;
-        this.port = port;
+
 
         body.append(accessPoint).append(' ')
-                .append(key).append(' ')
-                .append(value);
+                .append(key).append(' ');
 
-        if (port == -1){
-            body.append(' ').append(port);
-        }
+    }
+
+    @Override
+    public String toString() {
+        return type + CRLF + body.toString() + CRLF + value;
     }
 
     @Override
     public String getContent() {
-        return accessPoint + " " + key + " " + value;
+        return body.toString();
     }
 }

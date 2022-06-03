@@ -52,7 +52,7 @@ public class MembershipInitializer extends Thread {
                     List<String> content = new String(socket.getInputStream().readAllBytes())
                             .lines().collect(Collectors.toList());
 
-                    pool.submit(new MembershipDecoder(node, content));
+                    pool.submit(new OperationDecoder(node, content));
                     received++;
                     System.out.println("content = " + content);
 

@@ -49,7 +49,7 @@ public class MulticastListener extends Thread {
                 socket.receive(packet);
                 List<String> content = new String(packet.getData()).lines().collect(Collectors.toList());
                 packet.setLength(buffer.length);
-                pool.execute(new MembershipDecoder(node, content));
+                pool.execute(new OperationDecoder(node, content));
 
             } catch (SocketTimeoutException e) {
                 System.err.println(e.getMessage());
@@ -62,6 +62,7 @@ public class MulticastListener extends Thread {
 
         try {
             socket.leaveGroup(InetAddress.getByName(cluster.getAddress().getHostAddress()));
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

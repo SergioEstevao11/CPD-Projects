@@ -27,6 +27,7 @@ public class MembershipService {
         try {
             MembershipOperation operation = new MembershipOperation(pool, cluster, node);
             Membership membership = (Membership) UnicastRemoteObject.exportObject(operation, node.getAccessPoint().getPort());
+
             Registry registry = LocateRegistry.createRegistry(node.getAccessPoint().getPort());
             registry.rebind("Membership", membership);
 

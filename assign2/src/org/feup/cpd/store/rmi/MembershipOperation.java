@@ -3,9 +3,9 @@ package org.feup.cpd.store.rmi;
 import org.feup.cpd.interfaces.Membership;
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
-import org.feup.cpd.store.message.JoinMessage;
 import org.feup.cpd.store.message.LeaveMessage;
 import org.feup.cpd.store.network.LeaderMulticastSender;
+import org.feup.cpd.store.network.KeyValueListener;
 import org.feup.cpd.store.network.MembershipInitializer;
 import org.feup.cpd.store.network.MulticastListener;
 import org.feup.cpd.store.network.MulticastSender;
@@ -21,7 +21,8 @@ public class MembershipOperation implements Membership {
     private final Node node;
 
     private final MulticastSender sender;
-    private final MulticastListener listener;
+    private final MulticastListener membershipListener;
+    private final KeyValueListener keyValueListener;
 
     public MembershipOperation(ExecutorService pool, AccessPoint cluster, Node node) throws IOException {
         this.pool = pool;
@@ -29,7 +30,8 @@ public class MembershipOperation implements Membership {
         this.node = node;
 
         this.sender = new MulticastSender(cluster);
-        this.listener = new MulticastListener(pool, cluster, node);
+        this.membershipListener = new MulticastListener(pool, cluster, node);
+        this.keyValueListener = new KeyValueListener(pool, node);
     }
 
     @Override
@@ -55,8 +57,9 @@ public class MembershipOperation implements Membership {
             throw new RemoteException("Unable to initialize " + node.getAccessPoint() + " within " + cluster);
         }
 
-        listener.start();
 
+        membershipListener.start();
+        keyValueListener.start();
         System.out.println(node.getAccessPoint() + " is now a part of " + cluster);
         System.out.println("node view = " + node.getView());
 
@@ -74,8 +77,8 @@ public class MembershipOperation implements Membership {
         node.incrementCounter();
 
         try {
-            listener.stopRunning();
-
+            membershipListener.stopRunning();
+            keyValueListener.stopRunning();
             LeaveMessage leave = new LeaveMessage(node.getAccessPoint(), node.getCounter());
             sender.send(leave);
             node.addMembershipEvent(leave.getContent());

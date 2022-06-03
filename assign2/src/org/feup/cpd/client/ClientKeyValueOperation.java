@@ -1,20 +1,27 @@
 package org.feup.cpd.client;
 
 import org.feup.cpd.interfaces.KeyValue;
+import org.feup.cpd.store.AccessPoint;
+import org.feup.cpd.store.message.DeleteMessage;
+import org.feup.cpd.store.message.GetMessage;
+import org.feup.cpd.store.message.PutMessage;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClientKeyValueOperation implements KeyValue {
-    private final String nodeAccessPoint;
+    private final AccessPoint nodeAccessPoint;
 
-    public ClientKeyValueOperation(String nodeAccessPoint) {
-        this.nodeAccessPoint = nodeAccessPoint;
+    public ClientKeyValueOperation(AccessPoint AccessPoint) {
+        this.nodeAccessPoint = AccessPoint;
     }
 
     public String putClientSetup(String fileName) {
@@ -44,16 +51,69 @@ public class ClientKeyValueOperation implements KeyValue {
 
     @Override
     public void put(String key, String value) {
-        // TODO: make the communication with Node
+
+        System.out.println("Value = " + value);
+
+        try {
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
+            PutMessage putMessage = new PutMessage(nodeAccessPoint, key, value);
+            socket.getOutputStream().write(putMessage.toString().getBytes(StandardCharsets.UTF_8));
+
+        }catch (IOException e){
+            e.printStackTrace();
+            System.out.println("Put Socket IOException");
+        }
+
+
     }
 
     @Override
     public File get(String key) {
-        throw new UnsupportedOperationException();
+        try {
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
+            GetMessage getMessage = new GetMessage(nodeAccessPoint, key);
+            socket.getOutputStream().write(getMessage.toString().getBytes(StandardCharsets.UTF_8));
+
+            System.out.println("HEEEREEEEE");
+            Thread.sleep(1000);
+            socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort()+1);
+            List<String> input = new String(socket.getInputStream().readAllBytes())
+                    .lines().collect(Collectors.toList());
+
+            System.out.println("after read");
+
+
+            File file = new File(input.get(0));
+            System.out.println("after file init");
+
+            FileWriter writer = new FileWriter(input.get(0));
+            writer.write(input.get(1));
+            writer.close();
+
+            return file;
+
+        }catch (IOException e){
+            e.printStackTrace();
+            System.out.println("Put Socket IOException");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     @Override
     public void delete(String key) {
-        throw new UnsupportedOperationException();
+        try {
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
+            DeleteMessage deleteMessage = new DeleteMessage(nodeAccessPoint, key);
+            socket.getOutputStream().write(deleteMessage.toString().getBytes(StandardCharsets.UTF_8));
+
+
+
+        }catch (IOException e){
+            e.printStackTrace();
+            System.out.println("Put Socket IOException");
+        }
     }
 }

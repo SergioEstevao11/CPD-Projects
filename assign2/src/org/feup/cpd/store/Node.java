@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Array;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,8 +17,7 @@ public class Node {
     private NodeState state;
     private long counter;
     private final AccessPoint ap;
-    private final Set<String> view;
-    private final Map<String, String> viewSHA;
+    private final Map<String, String> view;
     private Queue<String> events;
     private Map<String, String> bucket;
     private final File logger;
@@ -25,10 +26,10 @@ public class Node {
     public Node(AccessPoint ap) {
         this.ap = ap;
         this.isLeader = false;
-        this.view = new HashSet<>();
-        this.viewSHA = new HashMap<>();
+        this.view = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
+        initBucket();
         this.logger = new File("log/" + ap.toString() + ".log");
         if (!this.logger.getParentFile().exists()) {
             boolean ignored = this.logger.getParentFile().mkdirs();
@@ -145,15 +146,16 @@ public class Node {
     }
 
     public void addNodeToView(String element) {
-        view.add(element);
+        view.put(element, getSHA(element));
     }
 
     public void removeNodeFromView(String element) {
         view.remove(element);
+
     }
 
     public Set<String> getView() {
-        return view;
+        return view.keySet();
     }
 
 
@@ -177,44 +179,99 @@ public class Node {
         return keyToBigEndian.toString();
     }
 
-    private String locateKeyValue(String key){
+    Comparator<String> compareBySHA = new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+            return view.get(o1).compareTo(view.get(o2));
+        }
+    };
+
+    public String findKeyValueLocation(String key){
+
+        if (view.size() == 1){
+            return ap.toString();
+        }
+
+        List<String> clock = new ArrayList<>();
+
+        for(String node : view.keySet()){
+            clock.add(node);
+        }
+
+        Collections.sort(clock, compareBySHA);
+
+        for(String node : clock){
+            if (key.compareTo(view.get(node)) < 0 ){
+                return node;
+            }
+        }
+
+        return clock.get(0);
+    }
+
+
+
+    public String locateKeyValue(String key){
         if (bucket.containsKey(key)){
             return ap.toString();
         }
         else{
             //locate node with the "clock structure" and binary search
-            return "";
+            return findKeyValueLocation(key);
         }
     }
 
     public String getValue(String key){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
-            return bucket.get(key);
-        }
-        else{
-            //mandar pedido "get" para o node "key_location"
-            return "";
-        }
+        return bucket.get(key);
     }
 
     public void putValue(String key, String value){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
-            bucket.put(key, value);
-        }
-        else{
-            //mandar pedido "put" para o node "key_location"
+        bucket.put(key, value);
+
+        try {
+            String path = "bucket/" + key;
+            File file = new File(path);
+            if (!file.getParentFile().exists()){
+                file.getParentFile().mkdirs();
+            }
+            FileWriter writer = new FileWriter(path);
+            writer.write(value);
+            writer.close();
+        } catch (IOException e){
+            e.printStackTrace();
+            System.out.println("Put Node IOException");
         }
     }
 
     public void deleteValue(String key){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
-            bucket.remove(key);
-        }
-        else{
-            //mandar pedido "remove" para o node "key_location"
+        bucket.remove(key);
+
+        String path = "bucket/" + key;
+        File file = new File(path);
+        file.delete();
+
+    }
+
+    private void initBucket() {
+        File folder = new File("bucket");
+        if (folder.exists()) {
+            try {
+                for (final File fileEntry : folder.listFiles()) {
+
+                    String key = fileEntry.getName();
+                    String value = "";
+                    Scanner myReader = new Scanner(fileEntry);
+                    while (myReader.hasNextLine()) {
+                        value += myReader.nextLine();
+                    }
+                    myReader.close();
+                    bucket.put(key, value);
+
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                System.out.println("init bucket FileNotFoundException");
+            }
         }
     }
 
