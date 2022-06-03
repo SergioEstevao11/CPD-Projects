@@ -2,6 +2,7 @@ package org.feup.cpd.store.network;
 
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
+import org.feup.cpd.store.NodeState;
 
 import java.io.IOException;
 import java.net.*;
@@ -51,7 +52,7 @@ public class MulticastListener extends Thread {
                 pool.execute(new OperationDecoder(node, content));
 
             } catch (SocketTimeoutException e) {
-                System.err.println("Multicast Timeout");
+                System.err.println(e.getMessage());
 
             } catch (IOException e) {
                 e.printStackTrace();

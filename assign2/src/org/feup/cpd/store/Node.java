@@ -14,15 +14,18 @@ import java.util.stream.Collectors;
 
 public class Node {
 
+    private NodeState state;
     private long counter;
     private final AccessPoint ap;
     private final Map<String, String> view;
     private Queue<String> events;
     private Map<String, String> bucket;
     private final File logger;
+    private boolean isLeader;
 
     public Node(AccessPoint ap) {
         this.ap = ap;
+        this.isLeader = false;
         this.view = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
@@ -37,6 +40,8 @@ public class Node {
         } catch (FileNotFoundException e) {
             this.counter = -1;
         }
+
+        this.state = NodeState.NORMAL;
     }
 
     private long recoverCounter() throws FileNotFoundException {
@@ -57,6 +62,13 @@ public class Node {
         return cnt;
     }
 
+    public NodeState getState() {
+        return state;
+    }
+
+    public void setState(NodeState state) {
+        this.state = state;
+    }
 
     public AccessPoint getAccessPoint() {
         return ap;
@@ -261,5 +273,13 @@ public class Node {
                 System.out.println("init bucket FileNotFoundException");
             }
         }
+    }
+
+    public void setLeader(boolean isLeader) {
+        this.isLeader = isLeader;
+    }
+
+    public boolean isLeader() {
+        return isLeader;
     }
 }

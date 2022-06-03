@@ -5,7 +5,6 @@ import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -22,10 +21,6 @@ public class MembershipService {
         this.pool = Executors.newCachedThreadPool();
         this.cluster = group;
         this.node = node;
-    }
-
-    public ExecutorService getPool() {
-        return pool;
     }
 
     public void listen() {
