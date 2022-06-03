@@ -5,6 +5,7 @@ import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
 import org.feup.cpd.store.message.JoinMessage;
 import org.feup.cpd.store.message.LeaveMessage;
+import org.feup.cpd.store.network.LeaderMulticastSender;
 import org.feup.cpd.store.network.MembershipInitializer;
 import org.feup.cpd.store.network.MulticastListener;
 import org.feup.cpd.store.network.MulticastSender;
@@ -43,8 +44,10 @@ public class MembershipOperation implements Membership {
             initializer.start();
             initializer.join();
 
-            if (node.getView().isEmpty())
+            if (node.getView().isEmpty()) {
                 node.addNodeToView(node.getAccessPoint().toString());
+                node.setLeader(true);
+            }
 
         } catch (InterruptedException | IOException e) {
             node.decrementCounter();
@@ -56,6 +59,11 @@ public class MembershipOperation implements Membership {
 
         System.out.println(node.getAccessPoint() + " is now a part of " + cluster);
         System.out.println("node view = " + node.getView());
+
+        if (node.isLeader()) {
+            Thread leader = new Thread(new LeaderMulticastSender(cluster, node));
+            leader.start();
+        }
     }
 
     @Override

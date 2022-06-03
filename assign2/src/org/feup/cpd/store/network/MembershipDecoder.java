@@ -28,7 +28,7 @@ public class MembershipDecoder implements Runnable {
         for (String element : view)
             node.addNodeToView(element);
 
-        List<String> events = content.subList(logsStart + 1, content.size());
+        List<String> events = content.subList(logsStart + 1, content.size() - 1);
         for (String event : events)
             node.addMembershipEvent(event);
     }
