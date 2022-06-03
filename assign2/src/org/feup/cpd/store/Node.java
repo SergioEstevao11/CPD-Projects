@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Array;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ public class Node {
         this.view = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
+        initBucket();
         this.logger = new File("log/" + ap.toString() + ".log");
         if (!this.logger.getParentFile().exists()) {
             boolean ignored = this.logger.getParentFile().mkdirs();
@@ -172,7 +174,11 @@ public class Node {
         }
     };
 
-    private String findKeyValue(String key){
+    public String findKeyValueLocation(String key){
+
+        if (view.size() == 1){
+            return ap.toString();
+        }
 
         List<String> clock = new ArrayList<>();
 
@@ -183,7 +189,7 @@ public class Node {
         Collections.sort(clock, compareBySHA);
 
         for(String node : clock){
-            if (view.get(key).compareTo(view.get(node)) < 0 ){
+            if (key.compareTo(view.get(node)) < 0 ){
                 return node;
             }
         }
@@ -199,7 +205,7 @@ public class Node {
         }
         else{
             //locate node with the "clock structure" and binary search
-            return findKeyValue(key);
+            return findKeyValueLocation(key);
         }
     }
 
@@ -208,10 +214,52 @@ public class Node {
     }
 
     public void putValue(String key, String value){
-            bucket.put(key, value);
+        bucket.put(key, value);
+
+        try {
+            String path = "bucket/" + key;
+            File file = new File(path);
+            if (!file.getParentFile().exists()){
+                file.getParentFile().mkdirs();
+            }
+            FileWriter writer = new FileWriter(path);
+            writer.write(value);
+            writer.close();
+        } catch (IOException e){
+            e.printStackTrace();
+            System.out.println("Put Node IOException");
+        }
     }
 
     public void deleteValue(String key){
         bucket.remove(key);
+
+        String path = "bucket/" + key;
+        File file = new File(path);
+        file.delete();
+
+    }
+
+    private void initBucket() {
+        File folder = new File("bucket");
+        if (folder.exists()) {
+            try {
+                for (final File fileEntry : folder.listFiles()) {
+
+                    String key = fileEntry.getName();
+                    String value = "";
+                    Scanner myReader = new Scanner(fileEntry);
+                    while (myReader.hasNextLine()) {
+                        value += myReader.nextLine();
+                    }
+                    myReader.close();
+                    bucket.put(key, value);
+
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                System.out.println("init bucket FileNotFoundException");
+            }
+        }
     }
 }

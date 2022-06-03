@@ -51,12 +51,13 @@ public class ClientKeyValueOperation implements KeyValue {
 
     @Override
     public void put(String key, String value) {
-        try {
-            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getPort());
-            PutMessage putMessage = new PutMessage(nodeAccessPoint, key, value);
-            DataOutputStream dOut = new DataOutputStream(socket.getOutputStream());
-            dOut.writeUTF(putMessage.toString());
 
+        System.out.println("Value = " + value);
+
+        try {
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
+            PutMessage putMessage = new PutMessage(nodeAccessPoint, key, value);
+            socket.getOutputStream().write(putMessage.toString().getBytes(StandardCharsets.UTF_8));
 
         }catch (IOException e){
             e.printStackTrace();
@@ -69,15 +70,22 @@ public class ClientKeyValueOperation implements KeyValue {
     @Override
     public File get(String key) {
         try {
-            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getPort());
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
             GetMessage getMessage = new GetMessage(nodeAccessPoint, key);
-            DataOutputStream dOut = new DataOutputStream(socket.getOutputStream());
-            dOut.writeUTF(getMessage.toString());
+            socket.getOutputStream().write(getMessage.toString().getBytes(StandardCharsets.UTF_8));
 
+            System.out.println("HEEEREEEEE");
+            Thread.sleep(1000);
+            socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort()+1);
             List<String> input = new String(socket.getInputStream().readAllBytes())
                     .lines().collect(Collectors.toList());
 
+            System.out.println("after read");
+
+
             File file = new File(input.get(0));
+            System.out.println("after file init");
+
             FileWriter writer = new FileWriter(input.get(0));
             writer.write(input.get(1));
             writer.close();
@@ -87,6 +95,8 @@ public class ClientKeyValueOperation implements KeyValue {
         }catch (IOException e){
             e.printStackTrace();
             System.out.println("Put Socket IOException");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -95,10 +105,10 @@ public class ClientKeyValueOperation implements KeyValue {
     @Override
     public void delete(String key) {
         try {
-            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getPort());
+            Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
             DeleteMessage deleteMessage = new DeleteMessage(nodeAccessPoint, key);
-            DataOutputStream dOut = new DataOutputStream(socket.getOutputStream());
-            dOut.writeUTF(deleteMessage.toString());
+            socket.getOutputStream().write(deleteMessage.toString().getBytes(StandardCharsets.UTF_8));
+
 
 
         }catch (IOException e){

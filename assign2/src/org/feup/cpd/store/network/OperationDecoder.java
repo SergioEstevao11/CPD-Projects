@@ -2,6 +2,7 @@ package org.feup.cpd.store.network;
 
 import org.feup.cpd.store.Node;
 import org.feup.cpd.store.message.MembershipMessage;
+import org.feup.cpd.store.message.PutMessage;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,13 +67,14 @@ public class OperationDecoder implements Runnable {
     }
 
     private void decodePut() {
+        System.out.println("RECEIVED A PUT");
         String[] fields = content.get(1).split("\\s+");
         String key = fields[1];
-        String value = fields[2];
+        String value = content.get(2);
 
-        String location_node = node.locateKeyValue(key);
+        String location_node = node.findKeyValueLocation(key);
 
-        if (node.getAccessPoint().toString() == location_node){
+        if (node.getAccessPoint().toString().equals(location_node)){
             node.putValue(key, value);
             System.out.println(location_node + " - Stored " + key + " : " + value);
         }
@@ -82,20 +84,23 @@ public class OperationDecoder implements Runnable {
 
     }
 
-    private void decodeGet() {
+    private void decodeGet() throws IOException {
         String[] fields = content.get(1).split("\\s+");
         String key = fields[1];
 
         String location_node = node.locateKeyValue(key);
-
+        String value = "";
         if (node.getAccessPoint().toString() == location_node){
-            String value = node.getValue(key);
+            value = node.getValue(key);
             System.out.println(location_node + " - Get " + value);
-
         }
         else{
             //redirect msg
         }
+        System.out.println("inside get");
+
+        Socket socket = new Socket(node.getAccessPoint().getAddress(), node.getAccessPoint().getKeyValuePort()+1);
+        socket.getOutputStream().write(value.getBytes(StandardCharsets.UTF_8));
     }
 
     private void decodeDel() {
@@ -124,6 +129,8 @@ public class OperationDecoder implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("RECEIVED A MESSAGE");
+
         switch (content.get(0)) {
             case "MEMBERSHIP":
                 decodeMembership();
@@ -138,7 +145,11 @@ public class OperationDecoder implements Runnable {
                 decodePut();
                 break;
             case "GET":
-                decodeGet();
+                try {
+                    decodeGet();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case "DEL":
                 decodeDel();

@@ -61,6 +61,7 @@ public class MulticastListener extends Thread {
 
         try {
             socket.leaveGroup(InetAddress.getByName(cluster.getAddress().getHostAddress()));
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
