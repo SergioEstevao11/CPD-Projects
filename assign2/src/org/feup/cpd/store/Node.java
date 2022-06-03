@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Node {
 
@@ -39,7 +40,7 @@ public class Node {
 
     private long recoverCounter() throws FileNotFoundException {
         BufferedReader reader = new BufferedReader(new FileReader(logger));
-        List<String> lines = reader.lines().toList();
+        List<String> lines = reader.lines().collect(Collectors.toList());
 
         long cnt = -1;
 
@@ -122,13 +123,21 @@ public class Node {
         }
     }
 
+    public Queue<String> getEvents() {
+        return events;
+    }
+
 
     public void clearMembershipView() {
         view.clear();
     }
 
-    public void updateMembershipView(String element) {
+    public void addNodeToView(String element) {
         view.add(element);
+    }
+
+    public void removeNodeFromView(String element) {
+        view.remove(element);
     }
 
     public Set<String> getView() {

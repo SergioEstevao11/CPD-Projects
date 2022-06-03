@@ -22,14 +22,22 @@ public class TestClient {
         String operation = args[1];
 
         switch (operation) {
-            case "join", "leave" -> handleMembershipOperation(nodeAccessPoint, operation);
-            case "put", "get", "delete" -> {
+            case "join":
+            case "leave":
+                handleMembershipOperation(nodeAccessPoint, operation);
+                break;
+            case "put":
+            case"get":
+            case"delete":
                 String operationArgument = args[2];
                 handleKeyValueOperation(nodeAccessPoint, operation, operationArgument);
-            }
-            default -> throw new IllegalArgumentException("Unexpected operation: " + operation);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unexpected operation: " + operation);
         }
     }
+
 
     private static void handleMembershipOperation(AccessPoint nodeAccessPoint,
                                                   String operation) throws IllegalArgumentException {
@@ -38,9 +46,12 @@ public class TestClient {
             Membership membership = (Membership) registry.lookup("Membership");
 
             switch (operation) {
-                case "join" -> membership.join();
-                case "leave" -> membership.leave();
-                default -> throw new IllegalArgumentException("Unexpected operation: " + operation);
+                case "join":
+                    membership.join(); break;
+                case "leave":
+                    membership.leave(); break;
+                default:
+                    throw new IllegalArgumentException("Unexpected operation: " + operation);
             }
         } catch (RemoteException | NotBoundException e) {
             System.err.println(e.getMessage());
@@ -54,19 +65,22 @@ public class TestClient {
         ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint.toString());
 
         switch (operation) {
-            case "put" -> {
+            case "put":
                 String key = keyValueOperation.putClientSetup(argument);
                 System.out.println("File saved with the following key: " + key);
-            }
-            case "get" -> {
+                break;
+            case "get":
                 File file = keyValueOperation.get(argument);
                 System.out.println("File saved to the following location: " + file.getPath());
-            }
-            case "delete" -> {
+                break;
+            case "delete":
                 keyValueOperation.delete(argument);
                 System.out.println("Erased the following key: " + argument);
-            }
-            default -> throw new IllegalArgumentException("Unexpected argument: " + argument);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unexpected argument: " + argument);
+
         }
     }
 

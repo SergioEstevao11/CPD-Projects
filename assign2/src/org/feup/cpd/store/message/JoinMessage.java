@@ -4,17 +4,17 @@ import org.feup.cpd.store.AccessPoint;
 
 public final class JoinMessage extends Message {
 
-    private final AccessPoint accessPoint;
+    private final AccessPoint newNode;
     private final long counter;
     private final int port;
 
-    public JoinMessage(AccessPoint accessPoint, long counter, int port) {
+    public JoinMessage(AccessPoint newNode, long counter, int port) {
         super("JOIN");
-        this.accessPoint = accessPoint;
+        this.newNode = newNode;
         this.counter = counter;
         this.port = port;
 
-        body.append(accessPoint).append(' ').append(counter).append(' ').append(port);
+        body.append(newNode).append(' ').append(counter).append(' ').append(port);
     }
 
     @Override
@@ -24,6 +24,6 @@ public final class JoinMessage extends Message {
 
     @Override
     public String getContent() {
-        return accessPoint + " " + counter;
+        return newNode + " " + counter;
     }
 }
