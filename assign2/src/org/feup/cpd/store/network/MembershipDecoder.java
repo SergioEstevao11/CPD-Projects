@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Random;
 
 public class MembershipDecoder implements Runnable {
 
@@ -38,9 +39,12 @@ public class MembershipDecoder implements Runnable {
         node.addMembershipEvent(fields[0] + " " + fields[1]);
 
         String hostname = fields[0].split(":")[0];
-        int port = Integer.parseUnsignedInt(fields[2]);
+        int port = Integer.parseInt(fields[2].trim());
 
         try {
+            System.out.println("Sending back membership message to " + fields[1]);
+            Thread.sleep(new Random().nextInt(1000));
+
             Socket socket = new Socket(hostname, port);
             socket.shutdownInput();
 
@@ -48,7 +52,9 @@ public class MembershipDecoder implements Runnable {
             OutputStream out = socket.getOutputStream();
             out.write(msg.toString().getBytes(StandardCharsets.UTF_8));
 
-        } catch (IOException e) {
+            socket.close();
+
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }

@@ -14,17 +14,21 @@ import java.util.concurrent.Executors;
 
 public class MembershipService {
 
+    private final ExecutorService pool;
     private final AccessPoint cluster;
     private final Node node;
 
     public MembershipService(AccessPoint group, Node node) {
+        this.pool = Executors.newCachedThreadPool();
         this.cluster = group;
         this.node = node;
     }
 
-    public void listen() {
-        ExecutorService pool = Executors.newFixedThreadPool(6);
+    public ExecutorService getPool() {
+        return pool;
+    }
 
+    public void listen() {
         try {
             MembershipOperation operation = new MembershipOperation(pool, cluster, node);
             Membership membership = (Membership) UnicastRemoteObject.exportObject(operation, node.getAccessPoint().getPort());
@@ -33,8 +37,6 @@ public class MembershipService {
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            pool.shutdown();
         }
     }
 }
