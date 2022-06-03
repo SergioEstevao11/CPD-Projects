@@ -73,7 +73,6 @@ public class OperationDecoder implements Runnable {
         System.out.println("RECEIVED A PUT");
         String[] fields = content.get(1).split("\\s+");
 
-        String accessPoint = fields[0];
         String key = fields[1];
         String value = content.get(2);
 
