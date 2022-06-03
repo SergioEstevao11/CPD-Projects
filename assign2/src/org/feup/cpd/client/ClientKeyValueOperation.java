@@ -68,38 +68,17 @@ public class ClientKeyValueOperation implements KeyValue {
     }
 
     @Override
-    public File get(String key) {
+    public void get(String key) {
         try {
             Socket socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort());
             GetMessage getMessage = new GetMessage(nodeAccessPoint, key);
             socket.getOutputStream().write(getMessage.toString().getBytes(StandardCharsets.UTF_8));
 
-            System.out.println("HEEEREEEEE");
-            Thread.sleep(1000);
-            socket = new Socket(nodeAccessPoint.getAddress(), nodeAccessPoint.getKeyValuePort()+1);
-            List<String> input = new String(socket.getInputStream().readAllBytes())
-                    .lines().collect(Collectors.toList());
-
-            System.out.println("after read");
-
-
-            File file = new File(input.get(0));
-            System.out.println("after file init");
-
-            FileWriter writer = new FileWriter(input.get(0));
-            writer.write(input.get(1));
-            writer.close();
-
-            return file;
-
         }catch (IOException e){
             e.printStackTrace();
             System.out.println("Put Socket IOException");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
-        return null;
     }
 
     @Override

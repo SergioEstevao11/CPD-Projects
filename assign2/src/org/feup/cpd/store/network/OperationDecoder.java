@@ -72,7 +72,7 @@ public class OperationDecoder implements Runnable {
         String key = fields[1];
         String value = content.get(2);
 
-        String location_node = node.findKeyValueLocation(key);
+        String location_node = node.locateKeyValue(key);
 
         if (node.getAccessPoint().toString().equals(location_node)){
             node.putValue(key, value);
@@ -90,17 +90,14 @@ public class OperationDecoder implements Runnable {
 
         String location_node = node.locateKeyValue(key);
         String value = "";
-        if (node.getAccessPoint().toString() == location_node){
+        if (node.getAccessPoint().toString().equals(location_node)){
             value = node.getValue(key);
             System.out.println(location_node + " - Get " + value);
         }
         else{
-            //redirect msg
+            //redirect msg e criar ficheiro
         }
-        System.out.println("inside get");
 
-        Socket socket = new Socket(node.getAccessPoint().getAddress(), node.getAccessPoint().getKeyValuePort()+1);
-        socket.getOutputStream().write(value.getBytes(StandardCharsets.UTF_8));
     }
 
     private void decodeDel() {
@@ -109,7 +106,7 @@ public class OperationDecoder implements Runnable {
 
         String location_node = node.locateKeyValue(key);
 
-        if (node.getAccessPoint().toString() == location_node){
+        if (node.getAccessPoint().toString().equals(location_node)){
             node.deleteValue(key);
             System.out.println(location_node + " - Del " + key);
         }

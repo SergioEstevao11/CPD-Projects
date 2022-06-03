@@ -71,8 +71,8 @@ public class TestClient {
                 System.out.println("File saved with the following key: " + key);
                 break;
             case "get":
-                File file = keyValueOperation.get(argument);
-                System.out.println("File saved to the following location: " + file.getPath());
+                keyValueOperation.get(argument);
+                System.out.println("File saved to the following location: bucket/" + nodeAccessPoint.toString());
                 break;
             case "delete":
                 keyValueOperation.delete(argument);
