@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class Store {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length != 4) {
             System.err.println("Usage: java Store <IP_mcast_addr> <IP_mcast_port> <node_id> <Store_port>");
             System.exit(1);
@@ -30,7 +30,6 @@ public class Store {
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(1);
-
         }
     }
 }

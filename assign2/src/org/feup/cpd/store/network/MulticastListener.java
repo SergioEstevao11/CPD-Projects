@@ -1,6 +1,5 @@
 package org.feup.cpd.store.network;
 
-import com.sun.source.tree.Scope;
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
 
@@ -14,20 +13,17 @@ public class MulticastListener extends Thread {
 
     private final ExecutorService pool;
     private final MulticastSocket socket;
-    private final SocketAddress address;
-    private final NetworkInterface netInterface;
-
+    private final AccessPoint cluster;
     private final Node node;
     private volatile boolean running;
 
     public MulticastListener(ExecutorService pool, AccessPoint cluster, Node node) throws IOException {
         this.pool = pool;
-        this.socket = new MulticastSocket();
-        this.socket.setReuseAddress(true);
-
+        this.cluster = cluster;
         this.node = node;
-        this.address = new InetSocketAddress(cluster.getAddress(), cluster.getPort());
-        this.netInterface = NetworkInterface.getByInetAddress(cluster.getAddress());
+
+        this.socket = new MulticastSocket(cluster.getPort());
+        this.socket.setReuseAddress(true);
         this.running = true;
     }
 
@@ -38,8 +34,7 @@ public class MulticastListener extends Thread {
     @Override
     public void run() {
         try {
-            socket.joinGroup(address, netInterface);
-            System.out.println("Joined multicast group " + address);
+            socket.joinGroup(InetAddress.getByName(cluster.getAddress().getHostAddress()));
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -52,10 +47,11 @@ public class MulticastListener extends Thread {
             try {
                 socket.receive(packet);
                 List<String> content = new String(packet.getData()).lines().collect(Collectors.toList());
-                pool.submit(new MembershipDecoder(node, content));
                 packet.setLength(buffer.length);
+                pool.execute(new MembershipDecoder(node, content));
 
-                System.out.println("content = " + content.get(0));
+            } catch (SocketTimeoutException e) {
+                System.err.println("Multicast Timeout");
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -64,7 +60,7 @@ public class MulticastListener extends Thread {
         }
 
         try {
-            socket.leaveGroup(address, netInterface);
+            socket.leaveGroup(InetAddress.getByName(cluster.getAddress().getHostAddress()));
         } catch (IOException e) {
             e.printStackTrace();
         }
