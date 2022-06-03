@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 public class Node {
 
-    private NodeState state;
     private long counter;
     private final AccessPoint ap;
     private final Map<String, String> view;
@@ -22,6 +21,7 @@ public class Node {
     private Map<String, String> bucket;
     private final File logger;
     private boolean isLeader;
+    private String homeDir;
 
     public Node(AccessPoint ap) {
         this.ap = ap;
@@ -29,11 +29,10 @@ public class Node {
         this.view = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
+        initFolders();
+        this.homeDir = "files/"+ap.toString()+"/";
         initBucket();
-        this.logger = new File("log/" + ap.toString() + ".log");
-        if (!this.logger.getParentFile().exists()) {
-            boolean ignored = this.logger.getParentFile().mkdirs();
-        }
+        this.logger = new File(homeDir + ap.toString() + ".log");
 
         try {
             this.counter = recoverCounter();
@@ -41,7 +40,14 @@ public class Node {
             this.counter = -1;
         }
 
-        this.state = NodeState.NORMAL;
+
+    }
+
+    private void initFolders() {
+        File bucketdir = new File("files/"+ap.toString()+"/bucket/");
+        if (!bucketdir.exists()) {
+            bucketdir.mkdirs();
+        }
     }
 
     private long recoverCounter() throws FileNotFoundException {
@@ -60,14 +66,6 @@ public class Node {
         }
 
         return cnt;
-    }
-
-    public NodeState getState() {
-        return state;
-    }
-
-    public void setState(NodeState state) {
-        this.state = state;
     }
 
     public AccessPoint getAccessPoint() {
@@ -229,11 +227,8 @@ public class Node {
         bucket.put(key, value);
 
         try {
-            String path = "bucket/" + key;
+            String path =  homeDir + "bucket/" + key;
             File file = new File(path);
-            if (!file.getParentFile().exists()){
-                file.getParentFile().mkdirs();
-            }
             FileWriter writer = new FileWriter(path);
             writer.write(value);
             writer.close();
@@ -246,14 +241,14 @@ public class Node {
     public void deleteValue(String key){
         bucket.remove(key);
 
-        String path = "bucket/" + key;
+        String path = ap.toString() + "/bucket/" + key;
         File file = new File(path);
         file.delete();
 
     }
 
     private void initBucket() {
-        File folder = new File("bucket");
+        File folder = new File(homeDir+"bucket");
         if (folder.exists()) {
             try {
                 for (final File fileEntry : folder.listFiles()) {

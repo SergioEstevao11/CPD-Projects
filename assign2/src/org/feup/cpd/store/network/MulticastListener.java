@@ -2,7 +2,7 @@ package org.feup.cpd.store.network;
 
 import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
-import org.feup.cpd.store.NodeState;
+//import org.feup.cpd.store.NodeState;
 
 import java.io.IOException;
 import java.net.*;
