@@ -65,6 +65,18 @@ public class MembershipDecoder implements Runnable {
         node.addMembershipEvent(content.get(1));
     }
 
+    private void decodePut() {
+        String[] fields = content.get(1).split("\\s+"); //mal
+        String key = fields[1];
+        node.getValue(key)
+    }
+
+    private void decodeGet() {
+    }
+
+    private void decodeDel() {
+    }
+
     @Override
     public void run() {
         switch (content.get(0)) {
@@ -76,6 +88,15 @@ public class MembershipDecoder implements Runnable {
                 break;
             case "LEAVE":
                 decodeLeave();
+                break;
+            case "PUT":
+                decodePut();
+                break;
+            case "GET":
+                decodeGet();
+                break;
+            case "DEL":
+                decodeDel();
                 break;
             default:
                 System.err.println("Error while decoding message of type: " + content.get(0));
