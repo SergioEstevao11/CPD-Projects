@@ -1,12 +1,13 @@
 package org.feup.cpd.store.network;
 
+import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
-import org.feup.cpd.store.message.MembershipMessage;
-import org.feup.cpd.store.message.PutMessage;
+import org.feup.cpd.store.message.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
@@ -29,13 +30,16 @@ public class OperationDecoder implements Runnable {
         for (String element : view)
             node.addNodeToView(element);
 
-        List<String> events = content.subList(logsStart + 1, content.size());
+        List<String> events = content.subList(logsStart + 1, content.size()-1);
         for (String event : events)
             node.addMembershipEvent(event);
     }
 
     private void decodeJoin() {
         String[] fields = content.get(1).split("\\s+");
+
+        System.out.println("========================input:" + content.get(1));
+
         node.addNodeToView(fields[0]);
         node.addMembershipEvent(fields[0] + " " + fields[1]);
 
@@ -66,42 +70,79 @@ public class OperationDecoder implements Runnable {
         node.addMembershipEvent(content.get(1));
     }
 
-    private void decodePut() {
+    private void decodePut() throws IOException {
         System.out.println("RECEIVED A PUT");
         String[] fields = content.get(1).split("\\s+");
+
+        String accessPoint = fields[0];
         String key = fields[1];
         String value = content.get(2);
 
         String location_node = node.locateKeyValue(key);
+        System.out.println("=============================================" + location_node);
 
         if (node.getAccessPoint().toString().equals(location_node)){
             node.putValue(key, value);
             System.out.println(location_node + " - Stored " + key + " : " + value);
         }
         else{
-            //redirect msg
+            String[] parts = location_node.split(":");
+            String address = parts[0];
+            String port = parts[1];
+
+            System.out.println("=============================================" + address);
+            System.out.println("=============================================" + port);
+
+
+            AccessPoint accessPointRedirect = new AccessPoint(address, port);
+            PutMessage putMessage = new PutMessage(accessPointRedirect, key, value);
+            Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
+            socket.getOutputStream().write(putMessage.toString().getBytes(StandardCharsets.UTF_8));
         }
 
     }
 
     private void decodeGet() throws IOException {
         String[] fields = content.get(1).split("\\s+");
+
+        String accessPoint = fields[0];
         String key = fields[1];
 
         String location_node = node.locateKeyValue(key);
         String value = "";
+
         if (node.getAccessPoint().toString().equals(location_node)){
             value = node.getValue(key);
+            if (!accessPoint.equals(node.getAccessPoint())){
+                String[] parts = accessPoint.split(":");
+                String address = parts[0];
+                String port = parts[1];
+
+                AccessPoint accessPointReturn = new AccessPoint(address, port);
+                Socket socket = new Socket(accessPointReturn.getAddress(), accessPointReturn.getKeyValuePort());
+                ReturnMessage returnMessage = new ReturnMessage(accessPointReturn, key, value);
+                socket.getOutputStream().write(returnMessage.toString().getBytes(StandardCharsets.UTF_8));
+            }
             System.out.println(location_node + " - Get " + value);
         }
         else{
-            //redirect msg e criar ficheiro
+            String[] parts = location_node.split(":");
+            String address = parts[0];
+            String port = parts[1];
+
+            AccessPoint accessPointRedirect = new AccessPoint(address, port);
+            GetMessage getMessage = new GetMessage(node.getAccessPoint(), key);
+            Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
+            socket.getOutputStream().write(getMessage.toString().getBytes(StandardCharsets.UTF_8));
+
         }
 
     }
 
-    private void decodeDel() {
+    private void decodeDel() throws IOException {
         String[] fields = content.get(1).split("\\s+");
+
+        String accessPoint = fields[0];
         String key = fields[1];
 
         String location_node = node.locateKeyValue(key);
@@ -111,51 +152,61 @@ public class OperationDecoder implements Runnable {
             System.out.println(location_node + " - Del " + key);
         }
         else{
-            //redirect msg
+            String[] parts = location_node.split(":");
+            String address = parts[0];
+            String port = parts[1];
+
+            AccessPoint accessPointRedirect = new AccessPoint(address, port);
+            DeleteMessage deleteMessage = new DeleteMessage(accessPointRedirect, key);
+            Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
+            socket.getOutputStream().write(deleteMessage.toString().getBytes(StandardCharsets.UTF_8));
         }
     }
 
     private void decodeReturn() {
         String[] fields = content.get(1).split("\\s+");
         String origin = fields[0];
-        String task = fields[1];
-        String body = fields[2];
+        String key = fields[1];
+        String value = content.get(2);
+        System.out.println("=============================================" + key);
+        System.out.println("=============================================" + value);
+        System.out.println("RECEIVED REDIRECT");
 
-        System.out.println(origin + " - " + task + " " + body);
+        node.putValue(key, value);
+
     }
 
     @Override
     public void run() {
-        System.out.println("RECEIVED A MESSAGE");
-
-        switch (content.get(0)) {
-            case "MEMBERSHIP":
-                decodeMembership();
-                break;
-            case "JOIN":
-                decodeJoin();
-                break;
-            case "LEAVE":
-                decodeLeave();
-                break;
-            case "PUT":
-                decodePut();
-                break;
-            case "GET":
-                try {
+        //System.out.println("RECEIVED A MESSAGE");
+        try {
+            switch (content.get(0)) {
+                case "MEMBERSHIP":
+                    decodeMembership();
+                    break;
+                case "JOIN":
+                    decodeJoin();
+                    break;
+                case "LEAVE":
+                    decodeLeave();
+                    break;
+                case "PUT":
+                    decodePut();
+                    break;
+                case "GET":
                     decodeGet();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case "DEL":
-                decodeDel();
-                break;
-            case "RETURN":
-                decodeReturn();
-                break;
-            default:
-                System.err.println("Error while decoding message of type: " + content.get(0));
+                    break;
+                case "DEL":
+                    decodeDel();
+                    break;
+                case "RETURN":
+                    decodeReturn();
+                    break;
+                default:
+                    System.err.println("Error while decoding message of type: " + content.get(0));
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

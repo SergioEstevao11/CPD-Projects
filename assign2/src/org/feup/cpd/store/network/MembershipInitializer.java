@@ -34,6 +34,9 @@ public class MembershipInitializer extends Thread {
 
     @Override
     public void run() {
+
+        System.out.println("================localport:"+server.getLocalPort());
+
         JoinMessage join = new JoinMessage(node.getAccessPoint(), node.getCounter(), server.getLocalPort());
 
         do {

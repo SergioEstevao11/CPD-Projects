@@ -12,7 +12,7 @@ public final class LeaveMessage extends Message {
         this.accessPoint = accessPoint;
         this.counter = counter;
 
-        body.append(accessPoint).append(' ').append(counter);
+        body.append(accessPoint).append(' ').append(counter).append(' ');
     }
 
     @Override

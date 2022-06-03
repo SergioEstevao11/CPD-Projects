@@ -4,19 +4,23 @@ import org.feup.cpd.store.AccessPoint;
 
 public class ReturnMessage extends Message{
     private final AccessPoint accessPoint;
-    private final String answer;
-    private final String task;
+    private final String key;
+    private final String value;
 
-    public ReturnMessage(AccessPoint accessPoint, String task, String answer) {
+    public ReturnMessage(AccessPoint accessPoint, String key, String value) {
         super("RETURN");
         this.accessPoint = accessPoint;
-        this.answer = answer;
-        this.task = task;
+        this.key = key;
+        this.value = value;
 
         body.append(accessPoint).append(' ')
-                .append(task).append(' ')
-                .append(answer);
+                .append(key);
 
+    }
+
+    @Override
+    public String toString() {
+        return type + CRLF + body.toString() + CRLF + value;
     }
 
     @Override

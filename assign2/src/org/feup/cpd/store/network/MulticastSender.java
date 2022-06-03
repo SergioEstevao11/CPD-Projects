@@ -25,6 +25,6 @@ public class MulticastSender {
         socket.send(packet);
         socket.close();
 
-        System.out.println("message = " + message.getContent());
+        //System.out.println("message = " + message.getContent());
     }
 }

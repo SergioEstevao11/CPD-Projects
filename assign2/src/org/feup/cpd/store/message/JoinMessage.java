@@ -14,12 +14,12 @@ public final class JoinMessage extends Message {
         this.counter = counter;
         this.port = port;
 
-        body.append(newNode).append(' ').append(counter).append(' ').append(port);
+        body.append(newNode).append(' ').append(counter).append(' ').append(port).append(' ');
     }
 
     @Override
     public String toString() {
-        return type + CRLF + body;
+        return type + CRLF + body.toString();
     }
 
     @Override
