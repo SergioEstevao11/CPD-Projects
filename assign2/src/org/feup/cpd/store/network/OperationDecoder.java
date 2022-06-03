@@ -10,12 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 
-public class MembershipDecoder implements Runnable {
+public class OperationDecoder implements Runnable {
 
     private final Node node;
     private final List<String> content;
 
-    public MembershipDecoder(Node node, List<String> content) {
+    public OperationDecoder(Node node, List<String> content) {
         this.node = node;
         this.content = content;
     }
@@ -66,15 +66,60 @@ public class MembershipDecoder implements Runnable {
     }
 
     private void decodePut() {
-        String[] fields = content.get(1).split("\\s+"); //mal
+        String[] fields = content.get(1).split("\\s+");
         String key = fields[1];
-        node.getValue(key)
+        String value = fields[2];
+
+        String location_node = node.locateKeyValue(key);
+
+        if (node.getAccessPoint().toString() == location_node){
+            node.putValue(key, value);
+            System.out.println(location_node + " - Stored " + key + " : " + value);
+        }
+        else{
+            //redirect msg
+        }
+
     }
 
     private void decodeGet() {
+        String[] fields = content.get(1).split("\\s+");
+        String key = fields[1];
+
+        String location_node = node.locateKeyValue(key);
+
+        if (node.getAccessPoint().toString() == location_node){
+            String value = node.getValue(key);
+            System.out.println(location_node + " - Get " + value);
+
+        }
+        else{
+            //redirect msg
+        }
     }
 
     private void decodeDel() {
+        String[] fields = content.get(1).split("\\s+");
+        String key = fields[1];
+
+        String location_node = node.locateKeyValue(key);
+
+        if (node.getAccessPoint().toString() == location_node){
+            node.deleteValue(key);
+            System.out.println(location_node + " - Del " + key);
+        }
+        else{
+            //redirect msg
+        }
+    }
+
+    private void decodeReturn() {
+        String[] fields = content.get(1).split("\\s+");
+        String origin = fields[0];
+        String task = fields[1];
+        String body = fields[2];
+
+        System.out.println(origin + " - " + task + " " + body);
     }
 
     @Override
@@ -97,6 +142,9 @@ public class MembershipDecoder implements Runnable {
                 break;
             case "DEL":
                 decodeDel();
+                break;
+            case "RETURN":
+                decodeReturn();
                 break;
             default:
                 System.err.println("Error while decoding message of type: " + content.get(0));

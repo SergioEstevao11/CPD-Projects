@@ -62,7 +62,7 @@ public class TestClient {
 
     private static void handleKeyValueOperation(AccessPoint nodeAccessPoint,
                                                 String operation, String argument) throws IllegalArgumentException {
-        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint.toString());
+        ClientKeyValueOperation keyValueOperation = new ClientKeyValueOperation(nodeAccessPoint);
 
         switch (operation) {
             case "put":

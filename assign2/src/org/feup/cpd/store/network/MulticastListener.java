@@ -48,7 +48,7 @@ public class MulticastListener extends Thread {
                 socket.receive(packet);
                 List<String> content = new String(packet.getData()).lines().collect(Collectors.toList());
                 packet.setLength(buffer.length);
-                pool.execute(new MembershipDecoder(node, content));
+                pool.execute(new OperationDecoder(node, content));
 
             } catch (SocketTimeoutException e) {
                 System.err.println("Multicast Timeout");

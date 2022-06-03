@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,16 +15,14 @@ public class Node {
 
     private long counter;
     private final AccessPoint ap;
-    private final Set<String> view;
-    private final Map<String, String> viewSHA;
+    private final Map<String, String> view;
     private Queue<String> events;
     private Map<String, String> bucket;
     private final File logger;
 
     public Node(AccessPoint ap) {
         this.ap = ap;
-        this.view = new HashSet<>();
-        this.viewSHA = new HashMap<>();
+        this.view = new HashMap<>();
         this.events = new LinkedList<>();
         this.bucket = new HashMap<>();
         this.logger = new File("log/" + ap.toString() + ".log");
@@ -133,15 +132,16 @@ public class Node {
     }
 
     public void addNodeToView(String element) {
-        view.add(element);
+        view.put(element, getSHA(element));
     }
 
     public void removeNodeFromView(String element) {
         view.remove(element);
+
     }
 
     public Set<String> getView() {
-        return view;
+        return view.keySet();
     }
 
 
@@ -165,44 +165,53 @@ public class Node {
         return keyToBigEndian.toString();
     }
 
-    private String locateKeyValue(String key){
+    Comparator<String> compareBySHA = new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+            return view.get(o1).compareTo(view.get(o2));
+        }
+    };
+
+    private String findKeyValue(String key){
+
+        List<String> clock = new ArrayList<>();
+
+        for(String node : view.keySet()){
+            clock.add(node);
+        }
+
+        Collections.sort(clock, compareBySHA);
+
+        for(String node : clock){
+            if (view.get(key).compareTo(view.get(node)) < 0 ){
+                return node;
+            }
+        }
+
+        return clock.get(0);
+    }
+
+
+
+    public String locateKeyValue(String key){
         if (bucket.containsKey(key)){
             return ap.toString();
         }
         else{
             //locate node with the "clock structure" and binary search
-            return "";
+            return findKeyValue(key);
         }
     }
 
     public String getValue(String key){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
-            return bucket.get(key);
-        }
-        else{
-            //mandar pedido "get" para o node "key_location"
-            return "";
-        }
+        return bucket.get(key);
     }
 
     public void putValue(String key, String value){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
             bucket.put(key, value);
-        }
-        else{
-            //mandar pedido "put" para o node "key_location"
-        }
     }
 
     public void deleteValue(String key){
-        String key_location = locateKeyValue(key);
-        if (key_location == ap.toString()){
-            bucket.remove(key);
-        }
-        else{
-            //mandar pedido "remove" para o node "key_location"
-        }
+        bucket.remove(key);
     }
 }
