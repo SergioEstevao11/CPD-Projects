@@ -35,7 +35,6 @@ public class MembershipInitializer extends Thread {
     @Override
     public void run() {
 
-        System.out.println("================localport:"+server.getLocalPort());
 
         JoinMessage join = new JoinMessage(node.getAccessPoint(), node.getCounter(), server.getLocalPort());
 
@@ -55,7 +54,7 @@ public class MembershipInitializer extends Thread {
                     List<String> content = new String(socket.getInputStream().readAllBytes())
                             .lines().collect(Collectors.toList());
 
-                    pool.submit(new OperationDecoder(node, content));
+                    pool.execute(new OperationDecoder(node, content));
                     received++;
                     System.out.println("content = " + content);
 

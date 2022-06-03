@@ -38,7 +38,6 @@ public class OperationDecoder implements Runnable {
     private void decodeJoin() {
         String[] fields = content.get(1).split("\\s+");
 
-        System.out.println("========================input:" + content.get(1));
 
         node.addNodeToView(fields[0]);
         node.addMembershipEvent(fields[0] + " " + fields[1]);

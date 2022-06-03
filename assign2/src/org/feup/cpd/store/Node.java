@@ -241,7 +241,7 @@ public class Node {
     public void deleteValue(String key){
         bucket.remove(key);
 
-        String path = ap.toString() + "/bucket/" + key;
+        String path = homeDir + "/bucket/" + key;
         File file = new File(path);
         file.delete();
 
