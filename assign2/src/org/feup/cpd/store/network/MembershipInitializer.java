@@ -28,7 +28,7 @@ public class MembershipInitializer extends Thread {
         this.received = 0;
 
         this.server = new ServerSocket(0, 3, node.getAccessPoint().getAddress());
-        this.server.setSoTimeout(3 * 1000);
+        this.server.setSoTimeout(1 * 1000);
     }
 
 

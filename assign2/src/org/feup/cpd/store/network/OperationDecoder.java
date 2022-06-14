@@ -4,7 +4,9 @@ import org.feup.cpd.store.AccessPoint;
 import org.feup.cpd.store.Node;
 import org.feup.cpd.store.message.*;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -95,7 +97,10 @@ public class OperationDecoder implements Runnable {
             AccessPoint accessPointRedirect = new AccessPoint(address, port);
             PutMessage putMessage = new PutMessage(accessPointRedirect, key, value);
             Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
+
             socket.getOutputStream().write(putMessage.toString().getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+            socket.close();
         }
 
     }
@@ -109,6 +114,8 @@ public class OperationDecoder implements Runnable {
         String location_node = node.locateKeyValue(key);
         String value = "";
 
+
+
         if (node.getAccessPoint().toString().equals(location_node)){
             value = node.getValue(key);
             if (!accessPoint.equals(node.getAccessPoint())){
@@ -120,6 +127,10 @@ public class OperationDecoder implements Runnable {
                 Socket socket = new Socket(accessPointReturn.getAddress(), accessPointReturn.getKeyValuePort());
                 ReturnMessage returnMessage = new ReturnMessage(accessPointReturn, key, value);
                 socket.getOutputStream().write(returnMessage.toString().getBytes(StandardCharsets.UTF_8));
+                socket.getOutputStream().flush();
+                socket.close();
+                System.out.println("=============================================SENT RETURN MESSAGE TO "+ accessPoint);
+
             }
             System.out.println(location_node + " - Get " + value);
         }
@@ -132,6 +143,8 @@ public class OperationDecoder implements Runnable {
             GetMessage getMessage = new GetMessage(node.getAccessPoint(), key);
             Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
             socket.getOutputStream().write(getMessage.toString().getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+            socket.close();
 
         }
 
@@ -158,6 +171,8 @@ public class OperationDecoder implements Runnable {
             DeleteMessage deleteMessage = new DeleteMessage(accessPointRedirect, key);
             Socket socket = new Socket(accessPointRedirect.getAddress(), accessPointRedirect.getKeyValuePort());
             socket.getOutputStream().write(deleteMessage.toString().getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+            socket.close();
         }
     }
 
@@ -201,7 +216,7 @@ public class OperationDecoder implements Runnable {
                     decodeReturn();
                     break;
                 default:
-                    System.err.println("Error while decoding message of type: " + content.get(0));
+                    System.err.println("Error while decoding message of type: " + content);
             }
         }catch (IOException e) {
             e.printStackTrace();

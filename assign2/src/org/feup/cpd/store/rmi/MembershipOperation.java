@@ -81,7 +81,10 @@ public class MembershipOperation implements Membership {
             keyValueListener.stopRunning();
             LeaveMessage leave = new LeaveMessage(node.getAccessPoint(), node.getCounter());
             sender.send(leave);
+
             node.addMembershipEvent(leave.getContent());
+            node.leaveKeyValueRebalance();
+
 
         } catch (IOException e) {
             node.decrementCounter();
