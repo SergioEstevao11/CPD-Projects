@@ -217,9 +217,6 @@ public class Node {
     }
 
     public String findNextKeyValueLocation(String key) {
-        if (view.size() == 1){
-            return "";
-        }
 
         List<String> clock = new ArrayList<>();
 
@@ -399,6 +396,8 @@ public class Node {
                 socket.getOutputStream().write(putMessage.toString().getBytes(StandardCharsets.UTF_8));
                 socket.getOutputStream().flush();
                 socket.close();
+
+                deleteValue(key);
             }
         }catch (IOException e){
             e.printStackTrace();
